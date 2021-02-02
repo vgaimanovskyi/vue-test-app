@@ -11,6 +11,9 @@
     <!-- AddModal -->
     <AddModal v-if="openAddModal" :item="item" @closeModal="toggleAddModal" />
 
+    <!-- DelModal -->
+    <DelModal v-if="openDelModal" :delID="delID" @closeModal="toggleDelModal" />
+
     <!-- Chart -->
     <div class="chart">
       <canvas ref="canvas"></canvas>
@@ -25,7 +28,8 @@
     </div>
 
     <!-- Table -->
-    <div class="table-container">
+    <Loader v-if="loading" />
+    <div v-else class="table-container">
       <table>
         <thead>
           <tr>
@@ -35,7 +39,8 @@
             <th>Status</th>
             <th>Last value</th>
             <th>Last Date</th>
-            <th>Add new value</th>
+            <th>Add value</th>
+            <th>Del item</th>
           </tr>
         </thead>
 
@@ -68,6 +73,11 @@
                 <i class="material-icons">add_circle</i>
               </button>
             </td>
+            <td>
+              <button class="btn red" @click="del(item.id, item.name)">
+                <i class="material-icons">delete</i>
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -90,19 +100,22 @@
 import M from "materialize-css";
 import ChangeModal from "@/components/ChangeModal";
 import AddModal from "@/components/AddModal";
+import DelModal from "@/components/DelModal";
 import paginationMixin from "@/mixins/pagination";
 import chartMixin from "@/mixins/chart";
 import { Line } from "vue-chartjs";
 
 export default {
   name: "Home",
-  components: { ChangeModal, AddModal },
+  components: { ChangeModal, AddModal, DelModal },
   extends: Line,
   mixins: [paginationMixin, chartMixin],
   data() {
     return {
       openChangeModal: false,
       openAddModal: false,
+      openDelModal: false,
+      delID: null,
       item: {},
       filter: null,
     };
@@ -116,6 +129,9 @@ export default {
     },
     filterData() {
       return this.data.filter((item) => item.type === this.filter);
+    },
+    loading() {
+      return this.$store.getters.getLoading;
     },
   },
   methods: {
@@ -134,6 +150,13 @@ export default {
     toggleAddModal() {
       this.openAddModal = !this.openAddModal;
     },
+    del(id, name) {
+      this.delID = { id, name };
+      this.toggleDelModal();
+    },
+    toggleDelModal() {
+      this.openDelModal = !this.openDelModal;
+    },
 
     // pagination in paginationMixin
 
@@ -141,6 +164,9 @@ export default {
   },
   mounted() {
     this.filter = this.types[0];
+
+    // await this.$store.dispatch("fetchDataByType");
+
     this.setupPagination(this.filterData);
     this.chart(this.filterData, this.filter);
 

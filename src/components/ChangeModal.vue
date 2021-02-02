@@ -8,7 +8,8 @@
           <b>{{ !item.active ? "Active" : "Disabled" }}</b> ?
         </p>
       </div>
-      <div class="modal-footer">
+      <Loader v-if="loading" />
+      <div v-else class="modal-footer">
         <button @click="confirm" class="modal-close btn-flat">Yes</button>
         <button @click="closeModal" class="modal-close btn-flat">No</button>
       </div>
@@ -20,11 +21,20 @@
 <script>
 export default {
   props: ["item"],
+  computed: {
+    loading() {
+      return this.$store.getters.getLoading;
+    },
+  },
   methods: {
-    confirm() {
+    async confirm() {
       this.item.active = !this.item.active;
-      this.$store.dispatch("changeItem", this.item);
-      this.$message("Status changed successfully");
+      try {
+        await this.$store.dispatch("changeItem", this.item);
+        this.$message("Status changed successfully");
+      } catch (error) {
+        console.log(error);
+      }
       this.closeModal();
     },
     closeModal() {

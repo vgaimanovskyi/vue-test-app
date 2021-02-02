@@ -4,7 +4,7 @@
 
     <form class="form" @submit.prevent="onSubmit">
       <div class="input-field">
-        <select ref="selectType" v-model="type">
+        <select ref="selectType" v-model="type" :disabled="loading">
           <option v-for="t in types" :key="t" :value="t">{{ t }}</option>
         </select>
         <label>Select a type</label>
@@ -19,6 +19,7 @@
           placeholder="Name"
           v-model="name"
           required
+          :disabled="loading"
         />
         <label for="recordname">Name</label>
         <span class="helper-text invalid" v-if="!validName">
@@ -31,13 +32,18 @@
 
       <p>
         <label>
-          <input type="checkbox" checked="checked" v-model="active" />
+          <input
+            type="checkbox"
+            checked="checked"
+            v-model="active"
+            :disabled="loading"
+          />
           <span>Status: {{ active ? "Active" : "Disabled" }}</span>
         </label>
       </p>
 
       <div class="input-field">
-        <select ref="selectDate" v-model="date">
+        <select ref="selectDate" v-model="date" :disabled="loading">
           <option v-for="d in dates" :key="d" :value="d">{{ d }}</option>
         </select>
         <label>Select a date</label>
@@ -49,11 +55,14 @@
           type="number"
           class="validate"
           v-model.number="value"
+          :disabled="loading"
         />
         <label for="datavalue">Value</label>
       </div>
 
+      <Loader v-if="loading" />
       <button
+        v-else
         class="btn waves-effect waves-light"
         type="submit"
         :disabled="!validName || name.length === 0"
@@ -67,7 +76,7 @@
 
 <script>
 import M from "materialize-css";
-import { uuid } from "vue-uuid";
+// import { uuid } from "vue-uuid";
 
 export default {
   name: "record",
@@ -99,12 +108,15 @@ export default {
         ? false
         : true;
     },
+    loading() {
+      return this.$store.getters.getLoading;
+    },
   },
   methods: {
-    onSubmit() {
+    async onSubmit() {
       if (this.validName && this.name.length !== 0) {
         // set id
-        const id = uuid.v1();
+        // const id = uuid.v1();
         // set history
         const idx = this.dates.indexOf(this.date);
         const history = this.dates.slice(0, idx + 1).map((item) => {
@@ -122,15 +134,18 @@ export default {
 
         // set record
         const record = {
-          id: id,
+          // id: id,
           type: this.type,
           name: this.name,
           active: this.active,
           history,
         };
-
-        this.$store.dispatch("addNewRecord", record);
-        this.$message("New record created successfully");
+        try {
+          await this.$store.dispatch("addNewRecord", record);
+          this.$message("New record created successfully");
+        } catch (error) {
+          console.log(error);
+        }
 
         // reset
         const length = this.typeData.length + 1;

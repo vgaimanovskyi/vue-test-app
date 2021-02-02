@@ -11,10 +11,23 @@ import Navbar from "@/components/Navbar";
 
 export default {
   components: { Navbar },
+  computed: {
+    error() {
+      return this.$store.getters.getError;
+    },
+  },
+  async created() {
+    await this.$store.dispatch("fetchData");
+  },
+  watch: {
+    error(message) {
+      this.$error(message || "Ops, its crashed");
+    },
+  },
 };
 </script>
 
-<style lang="scss">
+<style lang='scss'>
 @import "~materialize-css/dist/css/materialize.min.css";
 
 nav .brand-logo {

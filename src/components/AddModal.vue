@@ -34,6 +34,7 @@
                 checked="checked"
                 :value="item.active"
                 v-model="active"
+                :disabled="loading"
               />
               <span>Status: {{ active ? "Active" : "Disabled" }}</span>
             </label>
@@ -56,11 +57,13 @@
               type="number"
               class="validate"
               v-model.number="newValue"
+              :disabled="loading"
             />
             <label for="datavalue">New value</label>
           </div>
 
-          <div class="form-footer">
+          <Loader v-if="loading" />
+          <div v-else class="form-footer">
             <button
               class="btn waves-effect waves-light"
               type="button"
@@ -103,17 +106,24 @@ export default {
     nextDate() {
       return this.dates[this.item.history.length] || "Next year";
     },
+    loading() {
+      return this.$store.getters.getLoading;
+    },
   },
   methods: {
-    save() {
+    async save() {
       const newItem = { ...this.item, active: this.active };
       newItem.history.push({
         date: this.nextDate,
         value: this.newValue,
       });
 
-      this.$store.dispatch("changeItem", newItem);
-      this.$message("New value added successfully");
+      try {
+        await this.$store.dispatch("changeItem", newItem);
+        this.$message("New value added successfully");
+      } catch (error) {
+        console.log(error);
+      }
       this.closeModal();
     },
     closeModal() {
